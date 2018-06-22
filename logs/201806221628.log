@@ -1,0 +1,8 @@
+2018-06-22 16:28:07,149 ERROR myCmd.<module> Line:167 选择信息有误 invalid literal for int() with base 10: 'asdfasdfasdf'
+2018-06-22 16:28:07,149 ERROR myCmd.<module> Line:167 选择信息有误 invalid literal for int() with base 10: 'asdfasdfasdf'
+2018-06-22 16:28:20,709 ERROR myCmd.<module> Line:117 选择信息有误 invalid literal for int() with base 10: 'asdfasdfasdf'
+2018-06-22 16:28:20,709 ERROR myCmd.<module> Line:117 选择信息有误 invalid literal for int() with base 10: 'asdfasdfasdf'
+2018-06-22 16:28:46,476 ERROR Mydb.getCon Line:27 MysqldbError:(2003, "Can't connect to MySQL server on '192.168.80.136' (10060)")
+2018-06-22 16:28:46,476 ERROR Mydb.getCon Line:27 MysqldbError:(2003, "Can't connect to MySQL server on '192.168.80.136' (10060)")
+2018-06-22 16:28:46,476 ERROR myCmd.<module> Line:71 输入信息有误 local variable 'conn' referenced before assignment
+2018-06-22 16:28:46,476 ERROR myCmd.<module> Line:71 输入信息有误 local variable 'conn' referenced before assignment
