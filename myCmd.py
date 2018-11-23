@@ -2,6 +2,8 @@ import Mydb
 import cmd
 import sys
 import md_logger
+import os
+myLog = md_logger.myLog()
 class Client(cmd.Cmd):
 
     def __init(self):
@@ -19,11 +21,10 @@ class Client(cmd.Cmd):
 
 if __name__ == "__main__":
    #如果按错数字,继续要求输入
-    mylog=md_logger.logger()
     while True:
         # noinspection PyBroadException
         try:
-            number = int(input("查询请按:1  修改请按:2\n删除请按:3  退出程序请按:4\n"))
+            number = int(input("查询：1   修改：2   删除：3  \n恢复备份：4     退出程序：5\n"))
             client = Client()
             #如果选择了1，走查询模块
             if number == 1:
@@ -61,18 +62,16 @@ if __name__ == "__main__":
                             print("输入已经连续错误3次,请重新选择!\n")
                             break;
                         else:
-                            mylog.error("输入信息有误 %s", e)
+                            myLog.logger().error("输入信息有误 %s", e)
                             print("输入有误,请重新输入!")
                     #如果为真,退出输入模块,返回查询模块
                     if isReturn:
                         break
-            #如果按4退出该查询模块,继续走总模块流程
-            elif number == 4:
-                break
             #如果选择2,走修改模块
             elif number == 2:
             #输入错误次数的统计
                 count=0
+                Mydb.MysqldbHelper.back_Table()
                 while True:
                     # noinspection PyBroadException
                     try:
@@ -89,7 +88,7 @@ if __name__ == "__main__":
                             print("输入已经连续错误3次,请重新选择!\n")
                             break
                         else:
-                            mylog.error("输入信息有误 %s", e)
+                            myLog.logger().error("输入信息有误 %s", e)
                             print("输入信息有误,请重新输入!\n")
             #如果选择3,走删除模块
             elif number == 3:
@@ -109,15 +108,17 @@ if __name__ == "__main__":
                             print("输入已经连续错误3次,请重新选择!\n")
                             break
                         else:
-                            mylog.error("输入信息有误 %s", e)
+                            myLog.logger().error("输入信息有误 %s", e)
                             print("输入信息有误,请重新输入!")
             elif number == 4:
+                Mydb.MysqldbHelper.restore_Back_Table()
+            elif number == 5:
                 break #这里必须先退出循环后再退出cmd
                 client.do_exit()
                 client.cmdloop()
             else:print("选择有误,请重新选择!")
         except Exception as e:
 
-            mylog.error("选择信息有误 %s",e)
+            myLog.logger().error("选择信息有误 %s",e)
             print("选择有误,请重新选择!")
-os.system("pause")
+    os.system("pause")#按任意键退出

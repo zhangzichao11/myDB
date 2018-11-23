@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import json
+import time
 import MySQLdb
-
 import md_config
 import md_logger
 dbHost = md_config.getConfigDb('dbhost')
@@ -12,8 +12,11 @@ dbPasswd = md_config.getConfigDb('dbpasswd')
 dbPort = int(md_config.getConfigDb('dbport'))
 dbCharset = md_config.getConfigDb('dbcharset')
 #调用日志函数
-mylog=md_logger.logger()
-# noinspection PyGlobalUndefined
+fileTime = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
+myLog=md_logger.myLog()
+
+
+# noinspection PyArgumentList
 class MysqldbHelper:
     # 获取数据库连接
     @staticmethod
@@ -25,9 +28,8 @@ class MysqldbHelper:
                                    db=dbName,
                                    port=dbPort,
                                    charset=dbCharset,)
-            mylog.info("数据库连接成功 %s",conn.info())
         except MySQLdb.Error as e:
-            mylog.error("MysqldbError:%s" %e)
+            myLog.logger().info("MysqldbError:%s" %e)
             print("MysqldbError:%s" % e)
             #conn=False
             # 查询方法，使用con.cursor(MySQLdb.cursors.DictCursor),返回结果为字典
@@ -38,14 +40,19 @@ class MysqldbHelper:
             con = self.getCon()
             cur = con.cursor(MySQLdb.cursors.DictCursor)
             count=cur.execute(sql)
+            print('恢复语句的值:',count)
             if count>0:
                 fc = cur.fetchall()
             else:
                 fc=False
         except MySQLdb.Error as e:
             fc=False
-            mylog.error("Mysqldb Error:%s" % e)
-            print("Mysqldb Error:%s" % e)
+            myLog.logger().error("Mysqldb Error:%s" % e)
+            string_error=str(e)
+            find_txt="already exists"
+            count=string_error.find(find_txt)
+            if count == 50:
+                return count
             # 带参数的更新方法,eg:sql='insert into pythontest values(%s,%s,%s,now()',params=(6,'C#','good book')
         return fc
 
@@ -57,7 +64,7 @@ class MysqldbHelper:
             count=cursor.execute(sql, params)
             conn.commit()
         except MySQLdb.Error as e:
-            mylog.error("Mysqldb Error:%s" % e)
+            myLog.logger().error("Mysqldb Error:%s" % e)
             print("Mysqldb Error:%s" % e)
         return count
 
@@ -66,12 +73,30 @@ class MysqldbHelper:
         try:
             connU = self.getCon()
             cursorU = connU.cursor()
-            cursorU.execute(sql)
+            print('游标',cursorU)
+            xx = cursorU.execute(sql)
+            print('游标001', xx)
             connU.commit()
             count = 1
         except MySQLdb.Error as e:
             connU.rollback()
-            mylog.error("Mysqldb Error:%s" % e)
+            myLog.logger().error("Mysqldb Error:%s" % e)
+            print("Mysqldb Error:%s" % e)
+            count = 0
+        return count
+    def update1(self, sql):
+        global connU
+        try:
+            connU = self.getCon()
+            cursorU = connU.cursor()
+            print('游标',cursorU)
+            cursorU.execute(sql)
+            print('游标执行:',cursorU.execute(sql))
+            connU.commit()
+            count = 1
+        except MySQLdb.Error as e:
+            connU.rollback()
+            myLog.logger().error("Mysqldb Error:%s" % e)
             print("Mysqldb Error:%s" % e)
             count = 0
         return count
@@ -84,7 +109,6 @@ class MysqldbHelper:
         if  fc is False:
             print("您查询的数据不存在!")
         else:
-            print("查询成功!")
             for row in fc:
                 musicId = row.get('id')
         musicSet1 = "SELECT * FROM main_app_configcenter WHERE app_id=%s" % musicId
@@ -107,7 +131,6 @@ class MysqldbHelper:
         else:
             print("查询成功!")
             for row in fc:
-                # print(row["id"])
                 print(row)
     def ins(self):
         sql = "insert into pythontest values(5,'数据结构','this is a big book',now())"
@@ -135,7 +158,11 @@ class MysqldbHelper:
     '''
     apkVersion
     '''
+
+    # noinspection PyGlobalUndefined
     def change(self, apkVersion ,numId):
+        #执行操作前,先把要修改的所有表的内容保存一份,执行完成后并测试完成后，再
+        #根据需要决定是否恢复到测试前的内容
 
         #先在main_app_appmanager数据表中查询到该包对应的app_id
         global app_id,count1
@@ -354,3 +381,54 @@ class MysqldbHelper:
                                 print('ratings_switch的值更新失败!')
         else:
             print("请输入正确的dic信息",dic_json)
+
+    @staticmethod
+    def back_Table():
+        global configName,adsName
+        configBack = False
+        adsBack = False
+        #备份main_app_configcenter表
+        configName = 'config' + fileTime + '.txt'
+        back_config_Sql = "SELECT * INTO OUTFILE '/var/lib/mysql-files/%s'" \
+                         " FIELDS TERMINATED BY ','" \
+                         " OPTIONALLY ENCLOSED BY '\"' " \
+                         "LINES TERMINATED BY '\\n' " \
+                         "FROM main_app_configcenter" % configName
+        print('备份语句:',back_config_Sql)
+        isCount = MysqldbHelper.select(MysqldbHelper, back_config_Sql)
+        if isCount == 50:
+            MysqldbHelper.back_table()
+        else:
+            configBack = True
+            myLog.logger().info('main_app_configcenter备份文件: %s',configName)
+        #备份ads_sdk表
+        adsName= 'ads' + fileTime + '.txt'
+        back_ads_Sql = "SELECT * INTO OUTFILE '/var/lib/mysql-files/%s'" \
+                          " FIELDS TERMINATED BY ','" \
+                          " OPTIONALLY ENCLOSED BY '\"' " \
+                          "LINES TERMINATED BY '\\n' " \
+                          "FROM main_app_configcenter" % adsName
+        isCount = MysqldbHelper.select(MysqldbHelper, back_ads_Sql)
+        if isCount == 50:
+            MysqldbHelper.back_table()
+        else:
+            adsBack = True
+            myLog.logger().info('adsName备份文件: %s', adsName)
+        if configBack and adsBack:
+            print('数据表的内容备份成功!')
+
+    @staticmethod
+    def restore_Back_Table():
+        restore_config = False
+        restore_ads = False
+        #恢复main_app_configcenter表的内容
+        sqlSet = "SET FOREIGN_KEY_CHECKS = 0"
+        restore_config_sql = "LOAD DATA INFILE '/var/lib/mysql-files/config201811231629.txt'" \
+                             " REPLACE INTO TABLE main_app_configcenter" \
+                             " fields terminated by ','" \
+                             " enclosed by '\"'" \
+                             " LINES TERMINATED BY '\\n'"
+        print('恢复语句是:', restore_config_sql)
+        MysqldbHelper.update1(MysqldbHelper,sqlSet)
+        isRestore = MysqldbHelper.update1(MysqldbHelper,restore_config_sql)
+        print('返回内容是:',isRestore)

@@ -1,0 +1,3 @@
+2018-11-23 19:59:57,047 INFO Mydb.back_Table Line:402 main_app_configcenter备份文件: config201811231959.txt
+2018-11-23 19:59:59,136 INFO Mydb.back_Table Line:415 adsName备份文件: ads201811231959.txt
+2018-11-23 20:00:29,739 ERROR myCmd.<module> Line:122 选择信息有误 local variable 'count' referenced before assignment
