@@ -75,7 +75,7 @@ if __name__ == "__main__":
                 while True:
                     # noinspection PyBroadException
                     try:
-                        userId=int(input("输入要修改music哪个包:\n"))
+                        userId=input("输入要修改的应用名称:\n")
                         numberId = int(input("请输入最新的版本号:\n"))
                         # noinspection PyCallByClass,PyTypeChecker
                         Mydb.MysqldbHelper.change(Mydb.MysqldbHelper,userId , numberId)

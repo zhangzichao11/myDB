@@ -40,7 +40,6 @@ class MysqldbHelper:
             con = self.getCon()
             cur = con.cursor(MySQLdb.cursors.DictCursor)
             count=cur.execute(sql)
-            print('恢复语句的值:',count)
             if count>0:
                 fc = cur.fetchall()
             else:
@@ -73,9 +72,7 @@ class MysqldbHelper:
         try:
             connU = self.getCon()
             cursorU = connU.cursor()
-            print('游标',cursorU)
             xx = cursorU.execute(sql)
-            print('游标001', xx)
             connU.commit()
             count = 1
         except MySQLdb.Error as e:
@@ -160,13 +157,13 @@ class MysqldbHelper:
     '''
 
     # noinspection PyGlobalUndefined
-    def change(self, apkVersion ,numId):
+    def change(self, apkName ,numId):
         #执行操作前,先把要修改的所有表的内容保存一份,执行完成后并测试完成后，再
         #根据需要决定是否恢复到测试前的内容
 
         #先在main_app_appmanager数据表中查询到该包对应的app_id
         global app_id,count1
-        apk_Id_Sql = "select id,identifier from main_app_appmanager where name='music%s'" % apkVersion
+        apk_Id_Sql = "select id,identifier from main_app_appmanager where name='%s'" % apkName
         #apk_identifier_Sql = "select identifier from main_app_appmanager where name='music%s'" % apkVersion
         ft = self.select(self, apk_Id_Sql)
         if ft is False:
@@ -181,7 +178,8 @@ class MysqldbHelper:
             config_Id_Sql = "SELECT id FROM main_app_configcenter WHERE app_id=%s" % apk_Id
             # 根据apk_identifier在ads_sdk表中查询出要修改的对应的app_name
             update_Sdk_Sql = "update ads_sdk set version=1,`interval`=5,intervall=5,pone=100,ponel=100,home=100," \
-                             "homel=100,ptwo=100,ptwol=100,pthr=80,pthrl=80 where app_name='%s'" % apk_identifier
+                             "homel=100,ptwo=100,ptwol=100,pthr=80,pthrl=80," \
+                             "hours=0,hoursl=0,freeze=0,freezel=0,ad_delay=0 where app_name='%s'" % apk_identifier
             '''
             **先修改config配置里面的信息,修改完成后再去修改sdk广告的配置信息         
             '''
@@ -394,7 +392,6 @@ class MysqldbHelper:
                          " OPTIONALLY ENCLOSED BY '\"' " \
                          "LINES TERMINATED BY '\\n' " \
                          "FROM main_app_configcenter" % configName
-        print('备份语句:',back_config_Sql)
         isCount = MysqldbHelper.select(MysqldbHelper, back_config_Sql)
         if isCount == 50:
             MysqldbHelper.back_table()
@@ -407,7 +404,7 @@ class MysqldbHelper:
                           " FIELDS TERMINATED BY ','" \
                           " OPTIONALLY ENCLOSED BY '\"' " \
                           "LINES TERMINATED BY '\\n' " \
-                          "FROM main_app_configcenter" % adsName
+                          "FROM ads_sdk" % adsName
         isCount = MysqldbHelper.select(MysqldbHelper, back_ads_Sql)
         if isCount == 50:
             MysqldbHelper.back_table()
@@ -419,16 +416,30 @@ class MysqldbHelper:
 
     @staticmethod
     def restore_Back_Table():
-        restore_config = False
-        restore_ads = False
         #恢复main_app_configcenter表的内容
         sqlSet = "SET FOREIGN_KEY_CHECKS = 0"
-        restore_config_sql = "LOAD DATA INFILE '/var/lib/mysql-files/config201811231629.txt'" \
+        restore_config_sql = "LOAD DATA INFILE '/var/lib/mysql-files/%s'" \
                              " REPLACE INTO TABLE main_app_configcenter" \
                              " fields terminated by ','" \
                              " enclosed by '\"'" \
-                             " LINES TERMINATED BY '\\n'"
-        print('恢复语句是:', restore_config_sql)
-        MysqldbHelper.update1(MysqldbHelper,sqlSet)
-        isRestore = MysqldbHelper.update1(MysqldbHelper,restore_config_sql)
-        print('返回内容是:',isRestore)
+                             " LINES TERMINATED BY '\\n'" % configName
+        MysqldbHelper.update(MysqldbHelper,sqlSet)
+        isRestore = MysqldbHelper.update(MysqldbHelper,restore_config_sql)
+        if isRestore >0:
+            restore_config = True
+        else:
+            restore_config = False
+
+        restore_config_sql = "LOAD DATA INFILE '/var/lib/mysql-files/%s'" \
+                             " REPLACE INTO TABLE ads_sdk" \
+                             " fields terminated by ','" \
+                             " enclosed by '\"'" \
+                             " LINES TERMINATED BY '\\n'" % adsName
+        MysqldbHelper.update(MysqldbHelper, sqlSet)
+        isRestore = MysqldbHelper.update(MysqldbHelper, restore_config_sql)
+        if isRestore > 0:
+            restore_ads = True
+        else:
+            restore_ads = False
+        if restore_config and restore_ads:
+            print('数据表内容恢复成功!')
